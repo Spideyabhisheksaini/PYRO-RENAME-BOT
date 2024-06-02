@@ -52,11 +52,11 @@ async def refunc(client, message):
         
         await reply_message.delete()
 
-        buttons = [[InlineKeyboardButton("📁 Document", callback_data="upload_document")]]
+        buttons = [[InlineKeyboardButton("📁 Document", callback_data=f"upload_document|{new_name}")]]
         if file.media in [MessageMediaType.VIDEO, MessageMediaType.DOCUMENT]:
-            buttons.append([InlineKeyboardButton("🎥 Video", callback_data="upload_video")])
+            buttons.append([InlineKeyboardButton("🎥 Video", callback_data=f"upload_video|{new_name}")])
         elif file.media == MessageMediaType.AUDIO:
-            buttons.append([InlineKeyboardButton("🎵 Audio", callback_data="upload_audio")])
+            buttons.append([InlineKeyboardButton("🎵 Audio", callback_data=f"upload_audio|{new_name}")])
         
         await message.reply(
             text=f"**Select the output file type**\n**• File name:** ```{new_name}```",
@@ -67,7 +67,9 @@ async def refunc(client, message):
 
 @Client.on_callback_query(filters.regex("upload"))
 async def doc(bot, update):
-    new_name = update.message.text.split(":-")[1].strip()
+    callback_data = update.data.split("|")
+    upload_type = callback_data[0]
+    new_name = callback_data[1]
     file_path = f"downloads/{new_name}"
     file = update.message.reply_to_message
 
@@ -113,7 +115,7 @@ async def doc(bot, update):
     await ms.edit("Trying to upload...")
 
     try:
-        if update.data == "upload_document":
+        if upload_type == "upload_document":
             await bot.send_document(
                 user_id,
                 document=file_path,
@@ -122,7 +124,7 @@ async def doc(bot, update):
                 progress=progress_for_pyrogram,
                 progress_args=("Upload started...", ms, time.time())
             )
-        elif update.data == "upload_video":
+        elif upload_type == "upload_video":
             await bot.send_video(
                 user_id,
                 video=file_path,
@@ -132,7 +134,7 @@ async def doc(bot, update):
                 progress=progress_for_pyrogram,
                 progress_args=("Upload started...", ms, time.time())
             )
-        elif update.data == "upload_audio":
+        elif upload_type == "upload_audio":
             await bot.send_audio(
                 user_id,
                 audio=file_path,
